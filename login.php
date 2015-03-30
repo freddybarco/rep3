@@ -12,10 +12,17 @@ class login
 
 	public function __construct()
 	{
-		session_start();
-		$_SESSION["user"]=$_REQUEST["user"];
-		$_SESSION["password"]=$_REQUEST["password"];
-		$_SESSION["hgddX34355fD"]=False;
+		if (!empty($_POST['user']) && !empty($_POST['password'])) {
+		$this->user=$_POST["user"];
+		$this->pass=$_POST["password"];
+		$this->login=False;
+		}
+		else
+		{
+			header('Location: index.php');
+		}			
+
+
 	}
 
 	public function __destruct()
@@ -28,22 +35,22 @@ class login
 
 	public  function acceso()
 	{
-		
-		$user=$_SESSION["user"];
-		//echo "Usuario :".$user."<br>";
-		$password=$_SESSION["password"];
-		//echo "Password :".$password."<br>";
 	
-		if($this->verificar($user,$password))
+		if($this->verificar($this->user,$this->pass) )
 		{
 			$timestamp=time();
 			//echo "Tiempo :".$timestamp."   -    ".date('d/m/Y H:i:s',$timestamp)."<br>";
 			$this->grabar_session($timestamp,$user);
+			session_start();
+			$_SESSION["user"]=$this->user;
+			$_SESSION["password"]=$this->pass;
 			$_SESSION["hgddX34355fD"]=True;
+
 			header('Location: mediciones.php');
 		}
 		else
 		{
+			//echo $this->password."  ".$this->user;
 			header('Location: index.php');
 			//echo "No se pudo verificar"."<br>";
 		}
@@ -88,8 +95,9 @@ class login
 			$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 			$pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
 
-			$sql=$consult.$this->table.' WHERE userId = '."'".$user."'";
+			$sql=$consult.$this->table.' WHERE userId =:user';
 			$this->sQuery = $pdo->prepare($sql);
+			$this->sQuery->bindParam(':user', $user, PDO::PARAM_STR,12);
 			$pdo->beginTransaction();
         	$this->sQuery->execute();
         	$pdo->lastInsertId();
@@ -112,10 +120,10 @@ class login
 			$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 			$pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
 
-			$sql='UPDATE '.$this->table.' SET lastConnection ='.$timestamp.' WHERE userId ='."'".$user."'";
-			//echo $sql."<br>";
-			
+			$sql='UPDATE '.$this->table.' SET lastConnection =:timestamp WHERE userId =":user"';
 			$this->sQuery = $pdo->prepare($sql);
+			$this->sQuery->bindParam(':timestamp', $timestamp, PDO::PARAM_STR,12);
+			$this->sQuery->bindParam(':user', $user, PDO::PARAM_STR,12);
 			$pdo->beginTransaction();
         	$this->sQuery->execute();
         	$pdo->lastInsertId();
